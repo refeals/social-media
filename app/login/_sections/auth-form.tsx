@@ -2,8 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Eye, EyeOff } from "lucide-react"
+import { signIn, signUp } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -15,17 +14,23 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-import { signIn } from "@/actions/auth"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
-interface FormData {
+type SignInFormData = {
   email: string
   password: string
-  fullName?: string
-  username?: string
+}
+type SignUpFormData = {
+  email: string
+  password: string
+  fullName: string
+  username: string
 }
 
-interface FormErrors {
+type FormErrors = {
   email?: string
   password?: string
   fullName?: string
@@ -37,12 +42,12 @@ export function AuthForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const [loginData, setLoginData] = useState<FormData>({
+  const [loginData, setLoginData] = useState<SignInFormData>({
     email: "",
     password: "",
   })
 
-  const [signupData, setSignupData] = useState<FormData>({
+  const [signupData, setSignupData] = useState<SignUpFormData>({
     email: "",
     password: "",
     fullName: "",
@@ -51,6 +56,7 @@ export function AuthForm() {
 
   const [loginErrors, setLoginErrors] = useState<FormErrors>({})
   const [signupErrors, setSignupErrors] = useState<FormErrors>({})
+  const router = useRouter()
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -86,7 +92,16 @@ export function AuthForm() {
     setLoginErrors(errors)
 
     if (Object.keys(errors).length === 0) {
-      signIn(loginData)
+      const { success } = await signIn({
+        email: loginData.email,
+        password: loginData.password,
+      })
+
+      if (success) {
+        router.push("/")
+      } else {
+        setIsLoading(false)
+      }
     } else {
       setIsLoading(false)
     }
@@ -124,12 +139,18 @@ export function AuthForm() {
     setSignupErrors(errors)
 
     if (Object.keys(errors).length === 0) {
-      // Simulate API call
-      setTimeout(() => {
+      const { success } = await signUp({
+        email: signupData.email,
+        password: signupData.password,
+        fullName: signupData.fullName,
+        username: signupData.username,
+      })
+
+      if (success) {
+        router.push("/")
+      } else {
         setIsLoading(false)
-        // Redirect to home page would happen here
-        console.log("Conta criada com sucesso!")
-      }, 1000)
+      }
     } else {
       setIsLoading(false)
     }
@@ -172,6 +193,7 @@ export function AuthForm() {
                     setLoginData({ ...loginData, email: e.target.value })
                   }
                   className={loginErrors.email ? "border-destructive" : ""}
+                  autoComplete="email"
                 />
                 {loginErrors.email && (
                   <p className="text-sm text-destructive">
@@ -196,6 +218,7 @@ export function AuthForm() {
                         ? "border-destructive pr-10"
                         : "pr-10"
                     }
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
@@ -243,6 +266,7 @@ export function AuthForm() {
                     setSignupData({ ...signupData, fullName: e.target.value })
                   }
                   className={signupErrors.fullName ? "border-destructive" : ""}
+                  autoComplete="name"
                 />
                 {signupErrors.fullName && (
                   <p className="text-sm text-destructive">
@@ -256,12 +280,13 @@ export function AuthForm() {
                 <Input
                   id="signup-username"
                   type="text"
-                  placeholder="seuusuario"
+                  placeholder="Seu nome de usuário"
                   value={signupData.username}
                   onChange={(e) =>
                     setSignupData({ ...signupData, username: e.target.value })
                   }
                   className={signupErrors.username ? "border-destructive" : ""}
+                  autoComplete="username"
                 />
                 {signupErrors.username && (
                   <p className="text-sm text-destructive">
@@ -281,6 +306,7 @@ export function AuthForm() {
                     setSignupData({ ...signupData, email: e.target.value })
                   }
                   className={signupErrors.email ? "border-destructive" : ""}
+                  autoComplete="email"
                 />
                 {signupErrors.email && (
                   <p className="text-sm text-destructive">
@@ -305,6 +331,7 @@ export function AuthForm() {
                         ? "border-destructive pr-10"
                         : "pr-10"
                     }
+                    autoComplete="new-password"
                   />
                   <Button
                     type="button"
@@ -327,7 +354,7 @@ export function AuthForm() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={false}>
                 {isLoading ? "Criando conta..." : "Criar Conta"}
               </Button>
             </form>

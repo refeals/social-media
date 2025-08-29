@@ -1,9 +1,4 @@
-"use server"
-
-import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
-
-import { createClient } from "@/utils/supabase/server"
+import { createClient } from "@/utils/supabase/client"
 
 export async function signIn({
   email,
@@ -24,31 +19,65 @@ export async function signIn({
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect("/error") // TODO: redirect to login with error
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 
-  revalidatePath("/", "layout")
-  redirect("/")
+  return {
+    success: true,
+  }
 }
 
-export async function signUp(formData: FormData) {
+export async function signUp({
+  email,
+  password,
+  fullName,
+  username,
+}: {
+  email: string
+  password: string
+  fullName: string
+  username: string
+}) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  }
-
-  const { error } = await supabase.auth.signUp(data)
+  // const { error } = await supabase.auth.signUp(data)
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        // This goes into the raw_user_meta_data column
+        username,
+        full_name: fullName,
+      },
+    },
+  })
 
   if (error) {
-    redirect("/error") // TODO: redirect to login with error
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 
-  revalidatePath("/", "layout")
-  redirect("/")
+  const { success, error: signInError } = await signIn({
+    email,
+    password,
+  })
+
+  if (signInError) {
+    return {
+      success,
+      error: signInError,
+    }
+  }
+
+  return {
+    success,
+  }
 }
 
 export async function signOut() {
@@ -56,9 +85,14 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    redirect("/error") // TODO: redirect to login with error
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 
-  revalidatePath("/", "layout")
-  redirect("/")
+  return {
+    success: true,
+    error,
+  }
 }
