@@ -1,5 +1,5 @@
--- Create the profiles table
-CREATE TABLE public.profiles (
+-- Create the profile table
+CREATE TABLE public.profile (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE NOT NULL,
   full_name TEXT,
@@ -21,7 +21,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER on_profiles_updated
-  BEFORE UPDATE ON public.profiles
+  BEFORE UPDATE ON public.profile
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
@@ -29,7 +29,7 @@ CREATE TRIGGER on_profiles_updated
 -- Create the posts table
 CREATE TABLE public.posts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profile(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
   image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -43,7 +43,7 @@ CREATE INDEX posts_created_at_idx ON public.posts(created_at DESC);
 -- Create the likes table
 CREATE TABLE public.likes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profile(id) ON DELETE CASCADE NOT NULL,
   post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
@@ -57,7 +57,7 @@ CREATE INDEX likes_post_id_idx ON public.likes(post_id);
 -- Create the comments table
 CREATE TABLE public.comments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profile(id) ON DELETE CASCADE NOT NULL,
   post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -70,8 +70,8 @@ CREATE INDEX comments_post_id_idx ON public.comments(post_id);
 -- Create the follows table
 CREATE TABLE public.follows (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  follower_id UUID REFERENCES public.profile(id) ON DELETE CASCADE NOT NULL,
+  following_id UUID REFERENCES public.profile(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
   UNIQUE(follower_id, following_id) -- Prevents duplicate follows
@@ -85,13 +85,13 @@ CREATE INDEX follows_following_id_idx ON public.follows(following_id);
 -- RLS
 -- Anyone can view a profile
 CREATE POLICY "Profiles are viewable by everyone."
-  ON public.profiles
+  ON public.profile
   FOR SELECT
   USING ( true );
 
 -- Users can update their own profile
 CREATE POLICY "Users can update their own profile."
-  ON public.profiles
+  ON public.profile
   FOR UPDATE
   USING ( auth.uid() = id );
 
@@ -123,7 +123,7 @@ CREATE POLICY "Users can delete their own posts."
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, full_name, avatar_url)
+  INSERT INTO public.profile (id, username, full_name, avatar_url)
   VALUES (
     NEW.id,
     NEW.raw_user_meta_data->>'username',
