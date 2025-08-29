@@ -1,20 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import {
-  Heart,
-  MessageCircle,
-  Search,
-  User,
-  Share,
-  Plus,
-  MoreHorizontal,
-} from "lucide-react"
+import { createPost } from "@/actions/createPost"
+import { type PostsWithUserLikeStatus } from "@/actions/posts"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -28,19 +19,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { formatDistance } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import {
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Share2,
+  User,
+} from "lucide-react"
 import Link from "next/link"
-
-interface Post {
-  id: string
-  userName: string
-  userAvatar: string
-  postText: string
-  imageUrl?: string
-  likeCount: number
-  commentCount: number
-  timeAgo: string
-}
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 interface Comment {
   id: string
@@ -49,48 +43,6 @@ interface Comment {
   text: string
   timeAgo: string
 }
-
-const mockPosts: Post[] = [
-  {
-    id: "1",
-    userName: "Maria Silva",
-    userAvatar: "https://placehold.co/40x40/e11d48/white?text=MS",
-    postText: "Que dia lindo para um café na praia! ☕🌊",
-    imageUrl: "https://placehold.co/600x400/0ea5e9/white?text=Praia",
-    likeCount: 24,
-    commentCount: 8,
-    timeAgo: "há 2h",
-  },
-  {
-    id: "2",
-    userName: "João Santos",
-    userAvatar: "https://placehold.co/40x40/059669/white?text=JS",
-    postText: "Acabei de terminar meu projeto! Muito feliz com o resultado 🚀",
-    likeCount: 15,
-    commentCount: 3,
-    timeAgo: "há 4h",
-  },
-  {
-    id: "3",
-    userName: "Ana Costa",
-    userAvatar: "https://placehold.co/40x40/7c3aed/white?text=AC",
-    postText:
-      "Alguém mais viciado em séries coreanas? Preciso de recomendações!",
-    imageUrl: "https://placehold.co/600x300/dc2626/white?text=K-Drama",
-    likeCount: 42,
-    commentCount: 12,
-    timeAgo: "há 6h",
-  },
-  {
-    id: "4",
-    userName: "Pedro Lima",
-    userAvatar: "https://placehold.co/40x40/ea580c/white?text=PL",
-    postText: "Treino de hoje foi intenso! 💪 Quem mais está na academia?",
-    likeCount: 18,
-    commentCount: 5,
-    timeAgo: "há 8h",
-  },
-]
 
 const mockComments: Record<string, Comment[]> = {
   "1": [
@@ -120,7 +72,7 @@ const mockComments: Record<string, Comment[]> = {
   ],
 }
 
-export function HomeFeed() {
+export function HomeFeed({ posts }: { posts: PostsWithUserLikeStatus[] }) {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
   const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set())
   const [newPost, setNewPost] = useState("")
@@ -128,6 +80,8 @@ export function HomeFeed() {
   const [newComment, setNewComment] = useState("")
   const [comments, setComments] =
     useState<Record<string, Comment[]>>(mockComments)
+
+  const router = useRouter()
 
   const toggleLike = (postId: string) => {
     setLikedPosts((prev) => {
@@ -153,26 +107,28 @@ export function HomeFeed() {
     })
   }
 
-  const handleShare = (post: Post) => {
+  const handleShare = (post: PostsWithUserLikeStatus) => {
     if (navigator.share) {
       navigator.share({
-        title: `Post de ${post.userName}`,
-        text: post.postText,
+        title: `Post de ${post.profile.full_name}`,
+        text: post.content,
         url: window.location.href,
       })
     } else {
       // Fallback: copy to clipboard
-      navigator.clipboard.writeText(
-        `${post.postText} - ${window.location.href}`
-      )
+      navigator.clipboard.writeText(`${post.content} - ${window.location.href}`)
       // You could show a toast notification here
     }
   }
 
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (newPost.trim()) {
       // Here you would typically send the post to your backend
-      console.log("Novo post:", newPost)
+      const { error } = await createPost(newPost)
+
+      if (!error) {
+        router.refresh()
+      }
       setNewPost("")
     }
   }
@@ -276,48 +232,53 @@ export function HomeFeed() {
       {/* Main Feed */}
       <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="space-y-6">
-          {mockPosts.map((post) => (
+          {posts.map((post) => (
             <Card key={post.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Link href="/perfil">
-                      <Avatar className="w-10 h-10 cursor-pointer">
+                      <Avatar className="w-12 h-12 cursor-pointer">
                         <AvatarImage
-                          src={post.userAvatar || "/placeholder.svg"}
+                          // src={post.userAvatar || "/placeholder.svg"}
+                          src={"/placeholder.svg"}
                         />
                         <AvatarFallback>
-                          {post.userName
-                            .split(" ")
+                          {post.profile
+                            .full_name!.split(" ")
                             .map((n) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
                     </Link>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col flex-1 gap-0.5">
+                      <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-foreground">
-                          {post.userName}
+                          {post.profile.full_name}
                         </h3>
-                        {post.userName !== "Você" && (
+                        {post.profile.full_name !== "Você" && (
                           <Button
                             variant={
-                              followedUsers.has(post.userName)
+                              followedUsers.has(post.profile.full_name!)
                                 ? "secondary"
                                 : "outline"
                             }
                             size="sm"
-                            className="h-6 px-2 text-xs"
-                            onClick={() => toggleFollow(post.userName)}
+                            className="h-6 px-2 text-xs cursor-pointer"
+                            onClick={() =>
+                              toggleFollow(post.profile.full_name!)
+                            }
                           >
-                            {followedUsers.has(post.userName)
+                            {followedUsers.has(post.profile.full_name!)
                               ? "Seguindo"
                               : "Seguir"}
                           </Button>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {post.timeAgo}
+                        {formatDistance(post.created_at as string, new Date(), {
+                          locale: ptBR,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -344,14 +305,14 @@ export function HomeFeed() {
               <CardContent className="pt-0">
                 {/* Post Text */}
                 <p className="text-foreground mb-4 leading-relaxed">
-                  {post.postText}
+                  {post.content}
                 </p>
 
                 {/* Post Image */}
-                {post.imageUrl && (
+                {post.image_url && (
                   <div className="mb-4 -mx-6">
                     <img
-                      src={post.imageUrl || "/placeholder.svg"}
+                      src={post.image_url || "/placeholder.svg"}
                       alt="Post image"
                       className="w-full h-auto object-cover cursor-pointer"
                       onClick={() => {
@@ -379,7 +340,7 @@ export function HomeFeed() {
                         }`}
                       />
                       <span className="text-sm">
-                        {post.likeCount + (likedPosts.has(post.id) ? 1 : 0)}
+                        {post.like_count + (likedPosts.has(post.id) ? 1 : 0)}
                       </span>
                     </Button>
 
@@ -393,7 +354,8 @@ export function HomeFeed() {
                         >
                           <MessageCircle className="w-5 h-5" />
                           <span className="text-sm">
-                            {comments[post.id]?.length || post.commentCount}
+                            {/* {comments[post.id]?.length || post.commentCount} */}
+                            {comments[post.id]?.length || 0}
                           </span>
                         </Button>
                       </DialogTrigger>
@@ -470,10 +432,10 @@ export function HomeFeed() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-green-500 p-2"
+                    className="text-muted-foreground hover:text-green-500 p-2 cursor-pointer"
                     onClick={() => handleShare(post)}
                   >
-                    <Share className="w-4 h-4" />
+                    <Share2 className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>
