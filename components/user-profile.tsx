@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Link from "next/link"
+import { signOut } from "@/actions/auth"
 
 interface UserPost {
   id: string
@@ -91,7 +92,16 @@ export function UserProfile() {
                 </p>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                className="cursor-pointer"
+                variant="destructive"
+                onClick={signOut}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -216,7 +226,7 @@ export function UserProfile() {
 
           <TabsContent value="about" className="px-4">
             <Card>
-              <CardContent className="pt-6">
+              <CardContent>
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-foreground mb-2">

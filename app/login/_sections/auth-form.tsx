@@ -5,11 +5,18 @@ import type React from "react"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
+import { signIn } from "@/actions/auth"
 
 interface FormData {
   email: string
@@ -79,12 +86,7 @@ export function AuthForm() {
     setLoginErrors(errors)
 
     if (Object.keys(errors).length === 0) {
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false)
-        // Redirect to home page would happen here
-        console.log("Login realizado com sucesso!")
-      }, 1000)
+      signIn(loginData)
     } else {
       setIsLoading(false)
     }
@@ -103,7 +105,8 @@ export function AuthForm() {
     if (!signupData.username) {
       errors.username = "Nome de usuário é obrigatório"
     } else if (!validateUsername(signupData.username)) {
-      errors.username = "Nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números e _"
+      errors.username =
+        "Nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números e _"
     }
 
     if (!signupData.email) {
@@ -165,10 +168,16 @@ export function AuthForm() {
                   type="email"
                   placeholder="seu@email.com"
                   value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, email: e.target.value })
+                  }
                   className={loginErrors.email ? "border-destructive" : ""}
                 />
-                {loginErrors.email && <p className="text-sm text-destructive">{loginErrors.email}</p>}
+                {loginErrors.email && (
+                  <p className="text-sm text-destructive">
+                    {loginErrors.email}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -179,8 +188,14 @@ export function AuthForm() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Sua senha"
                     value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    className={loginErrors.password ? "border-destructive pr-10" : "pr-10"}
+                    onChange={(e) =>
+                      setLoginData({ ...loginData, password: e.target.value })
+                    }
+                    className={
+                      loginErrors.password
+                        ? "border-destructive pr-10"
+                        : "pr-10"
+                    }
                   />
                   <Button
                     type="button"
@@ -196,7 +211,11 @@ export function AuthForm() {
                     )}
                   </Button>
                 </div>
-                {loginErrors.password && <p className="text-sm text-destructive">{loginErrors.password}</p>}
+                {loginErrors.password && (
+                  <p className="text-sm text-destructive">
+                    {loginErrors.password}
+                  </p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -220,10 +239,16 @@ export function AuthForm() {
                   type="text"
                   placeholder="Seu nome completo"
                   value={signupData.fullName}
-                  onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, fullName: e.target.value })
+                  }
                   className={signupErrors.fullName ? "border-destructive" : ""}
                 />
-                {signupErrors.fullName && <p className="text-sm text-destructive">{signupErrors.fullName}</p>}
+                {signupErrors.fullName && (
+                  <p className="text-sm text-destructive">
+                    {signupErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -233,10 +258,16 @@ export function AuthForm() {
                   type="text"
                   placeholder="seuusuario"
                   value={signupData.username}
-                  onChange={(e) => setSignupData({ ...signupData, username: e.target.value })}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, username: e.target.value })
+                  }
                   className={signupErrors.username ? "border-destructive" : ""}
                 />
-                {signupErrors.username && <p className="text-sm text-destructive">{signupErrors.username}</p>}
+                {signupErrors.username && (
+                  <p className="text-sm text-destructive">
+                    {signupErrors.username}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -246,10 +277,16 @@ export function AuthForm() {
                   type="email"
                   placeholder="seu@email.com"
                   value={signupData.email}
-                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, email: e.target.value })
+                  }
                   className={signupErrors.email ? "border-destructive" : ""}
                 />
-                {signupErrors.email && <p className="text-sm text-destructive">{signupErrors.email}</p>}
+                {signupErrors.email && (
+                  <p className="text-sm text-destructive">
+                    {signupErrors.email}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -260,8 +297,14 @@ export function AuthForm() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Crie uma senha"
                     value={signupData.password}
-                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                    className={signupErrors.password ? "border-destructive pr-10" : "pr-10"}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, password: e.target.value })
+                    }
+                    className={
+                      signupErrors.password
+                        ? "border-destructive pr-10"
+                        : "pr-10"
+                    }
                   />
                   <Button
                     type="button"
@@ -277,7 +320,11 @@ export function AuthForm() {
                     )}
                   </Button>
                 </div>
-                {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
+                {signupErrors.password && (
+                  <p className="text-sm text-destructive">
+                    {signupErrors.password}
+                  </p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
