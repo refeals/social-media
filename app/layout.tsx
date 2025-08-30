@@ -1,15 +1,14 @@
-import type React from "react"
+import { ThemeProvider } from "@/components/theme-provider"
 import type { Metadata } from "next"
 import { Roboto } from "next/font/google"
-import { Suspense } from "react"
-import { ThemeProvider } from "@/components/theme-provider"
-import "./globals.css"
 import Head from "next/head"
+import type React from "react"
+import { Suspense } from "react"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Social - Rede Social Brasileira",
-  description: "A rede social feita para brasileiros",
-  generator: "v0.app",
+  title: "SocialBR",
+  description: "A rede social brasileira",
 }
 
 const roboto = Roboto({
@@ -27,7 +26,7 @@ export default function RootLayout({
       <Head>
         <script
           defer
-          src="http://social-media-umami-b5999a-145-223-31-54.traefik.me/script.js"
+          src="https://umami.schedra.com.br/script.js"
           data-website-id="54e4289c-95df-4f6d-8094-29b6b9aac498"
         ></script>
       </Head>
